@@ -1,0 +1,211 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>RiskGuard AI Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* Layout: market-terminal backdrop (candles, grid, ticker) behind a glass phone and a side panel; dark-first. */
+:root{--bg:#06101D;--bg2:#0B1F36;--surface:rgba(14,32,54,.82);--ink:#EAF2F8;--muted:#93A9BD;--line:rgba(120,160,200,.22);--accent:#3DDBC0;--accent2:#E8C26A;--accent-ink:#04201B;--warn:#F2A33A;--warn-bg:rgba(242,163,58,.14);--ok-bg:rgba(61,219,192,.13);--bar-bg:rgba(120,160,200,.2);--frame:#1C3A5C;--grid:rgba(120,160,200,.09);--bgop:1;--glow:rgba(61,219,192,.25);
+--display:'Space Grotesk',Arial,sans-serif;--body:'Inter',Arial,sans-serif;color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#EAF0F6;--bg2:#DCE7F2;--surface:rgba(255,255,255,.88);--ink:#0E2238;--muted:#52667A;--line:rgba(30,70,110,.18);--accent:#0E7C6B;--accent2:#9A7210;--accent-ink:#FFFFFF;--warn:#B45309;--warn-bg:#FFEFD9;--ok-bg:#DDF3EE;--bar-bg:#D5DEE8;--frame:#0E2238;--grid:rgba(30,70,110,.08);--bgop:.7;--glow:rgba(14,124,107,.18);color-scheme:light}}
+:root[data-theme="light"]{--bg:#EAF0F6;--bg2:#DCE7F2;--surface:rgba(255,255,255,.88);--ink:#0E2238;--muted:#52667A;--line:rgba(30,70,110,.18);--accent:#0E7C6B;--accent2:#9A7210;--accent-ink:#FFFFFF;--warn:#B45309;--warn-bg:#FFEFD9;--ok-bg:#DDF3EE;--bar-bg:#D5DEE8;--frame:#0E2238;--grid:rgba(30,70,110,.08);--bgop:.7;--glow:rgba(14,124,107,.18);color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 700px at 75% -10%,var(--bg2),var(--bg));background-color:var(--bg);color:var(--ink);font-family:var(--body);min-height:100vh}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:var(--bgop);pointer-events:none}
+.ticker{position:relative;z-index:1;overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--line);background:var(--surface);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ticker div{display:inline-block;padding:9px 0;animation:tick 48s linear infinite}
+.ticker span{margin:0 22px}.up{color:var(--accent)}.dn{color:var(--warn)}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticker div{animation:none}}
+.wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:26px;padding-block:28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center}
+.brand{display:flex;gap:14px;align-items:center}
+.logo{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;box-shadow:0 8px 28px var(--glow)}
+h1{font-family:var(--display);font-size:clamp(1.7rem,4vw,2.4rem);margin:0;letter-spacing:-.02em;background:linear-gradient(90deg,var(--ink),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2,h3{font-family:var(--display);margin:0}
+.sub{color:var(--muted);font-size:.92rem;margin:4px 0 0}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);backdrop-filter:blur(8px)}
+.seg button{border:0;background:none;color:var(--ink);padding:9px 15px;font-size:.9rem;transition:background .2s}
+.seg button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);font-weight:600}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.stage{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+.phone{width:min(400px,100%);background:var(--surface);backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 0 0 7px var(--frame),0 30px 80px rgba(0,0,0,.45),0 0 70px var(--glow);border-radius:40px;padding:26px 22px;display:flex;flex-direction:column;gap:15px;min-height:660px;margin:7px}
+.tag{align-self:flex-start;font-size:.74rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);border:1px solid var(--line);border-radius:30px;padding:5px 12px}
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;color:var(--ink);padding:12px 15px;border-radius:14px;font-size:.95rem;transition:transform .15s,border-color .2s}
+.opt:hover{border-color:var(--accent);transform:translateX(3px)}
+.opt[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:var(--accent-ink);font-weight:600}
+.q{font-family:var(--display);font-weight:500;font-size:1.02rem;margin:6px 0 0}
+.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);border:0;border-radius:14px;padding:14px;font-weight:700;font-size:.95rem;box-shadow:0 10px 26px var(--glow)}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:12px;font-size:.93rem}
+.ghost:hover{border-color:var(--accent)}
+.badge{display:inline-block;border-radius:30px;padding:5px 12px;font-size:.78rem;font-weight:600;margin:0 4px 4px 0}
+.badge.high{background:var(--warn-bg);color:var(--warn)}.badge.ok{background:var(--ok-bg);color:var(--accent)}
+.gauge{position:relative;width:min(260px,100%);margin:0 auto}
+.gauge svg{width:100%;display:block}
+.gauge .gv{position:absolute;left:0;right:0;bottom:2px;text-align:center}
+.gauge .gv b{font-family:var(--display);font-size:2rem;font-variant-numeric:tabular-nums}
+.gauge .gv span{display:block;font-size:.76rem;color:var(--muted)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m{border:1px solid var(--line);border-radius:14px;padding:11px 13px}
+.m b{display:block;font-family:var(--display);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.m span{font-size:.76rem;color:var(--muted)}
+.row{display:flex;flex-direction:column;gap:3px}
+.row label{display:flex;justify-content:space-between;font-size:.88rem}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.bars{display:flex;flex-direction:column;gap:8px;font-size:.82rem}
+.bar{display:grid;grid-template-columns:78px 1fr 46px;gap:8px;align-items:center}
+.track{height:11px;background:var(--bar-bg);border-radius:6px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:6px;transition:width .3s}
+.w{background:var(--accent)}.r{background:var(--warn)}
+.note{font-size:.85rem;color:var(--muted);line-height:1.45;margin:0}
+.alert{background:var(--warn-bg);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:14px;padding:14px;font-size:.93rem;line-height:1.5}
+.alert.ok{background:var(--ok-bg);border-left-color:var(--accent)}
+.side{flex:1 1 300px;max-width:420px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.side>div{border:1px solid var(--line);background:var(--surface);backdrop-filter:blur(10px);border-radius:18px;padding:18px}
+.side h3{font-size:1.05rem;margin-bottom:10px;color:var(--accent2)}
+.side li{font-size:.9rem;line-height:1.55;color:var(--ink);margin-bottom:8px}
+.side ul{margin:0;padding-left:18px}
+footer{font-size:.8rem;color:var(--muted);text-align:center}
+[hidden]{display:none!important}
+
+.phone{padding:0;gap:0;overflow:hidden;height:760px;min-height:0;border-radius:44px}
+.sb{display:flex;justify-content:space-between;padding:14px 26px 4px;font-size:.78rem;font-weight:600;color:var(--ink)}
+.appbar{display:flex;align-items:center;gap:12px;padding:8px 20px 12px}
+.appbar div:nth-child(2){flex:1}.appbar small{display:block;color:var(--muted);font-size:.78rem}.appbar b{font-family:var(--display);font-size:1.1rem}
+.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--accent-ink);display:grid;place-items:center;font-weight:700}
+.bell{position:relative;background:none;border:1px solid var(--line);color:var(--ink);width:40px;height:40px;border-radius:50%;display:grid;place-items:center}
+em{position:absolute;top:7px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--warn);border:2px solid var(--bg2)}
+.scr{flex:1;overflow-y:auto;padding:4px 20px 18px;display:flex;flex-direction:column;gap:14px}
+.tabbar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding:8px 6px 14px;background:var(--surface)}
+.tabbar button{background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;padding:4px}
+.tabbar button[aria-current]{color:var(--accent)}.tabbar button[aria-current] span{font-weight:700}
+.tabbar i{position:relative;display:grid;place-items:center}.tabbar em{top:-2px;right:-4px}
+.bal{border-radius:22px;padding:18px;background:linear-gradient(135deg,#0E6F63 0%,#12405F 70%,#1B2D5A 100%);color:#F2F8FB;display:flex;flex-direction:column;gap:6px;box-shadow:0 14px 34px var(--glow)}
+.bal span{font-size:.8rem;opacity:.85}.bal b{font-family:var(--display);font-size:2rem;font-variant-numeric:tabular-nums}
+.chip{display:inline-block;background:rgba(255,255,255,.16);border-radius:30px;padding:4px 11px;font-size:.76rem;margin:4px 6px 0 0}.chip.w2{background:rgba(242,163,58,.35)}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qa button{background:none;border:0;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.72rem;padding:0}
+.qa i{width:52px;height:52px;border-radius:16px;border:1px solid var(--line);background:var(--ok-bg);color:var(--accent);display:grid;place-items:center}
+.sec{font-size:.98rem;margin-top:2px}
+.list{display:flex;flex-direction:column;gap:8px}
+.list div{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:11px 13px;font-size:.88rem}
+.list i{color:var(--accent);display:grid}
+</style>
+<svg id="bg" aria-hidden="true" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1600 900"></svg>
+<div class="ticker" aria-hidden="true"><div id="tk"></div></div>
+<div class="wrap">
+<header><div class="brand"><div class="logo"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#04201B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M8 14l3-3 2 2 3-4"/></svg></div><div><h1>RiskGuard AI</h1><p class="sub" id="sub"></p></div></div>
+<div class="toolbar"><div class="seg" id="langs" role="group" aria-label="Language"><button data-l="en" aria-pressed="true">EN</button><button data-l="ms" aria-pressed="false">BM</button></div></div></header>
+<div class="stage">
+<main class="phone" id="phone" aria-live="polite"></main>
+<aside class="side" id="side"></aside>
+</div>
+<footer id="foot"></footer>
+</div>
+<script>
+const T={en:{sub:"Clickable prototype · hypothetical portfolio of RM10,000",steps:["1 Profile","2 Dashboard","3 Alert"],
+s1:"Risk profile",q1:"If your portfolio fell 20% in a month, you would…",a1:["Sell everything","Hold and review","Buy more"],q2:"How long can you leave the money invested?",a2:["Under 3 years","3 to 7 years","Over 7 years"],q3:"What matters most?",a3:["Protect my money","Balance growth and safety","Grow my money"],
+prof:"Your profile",limit:"Permitted volatility up to",profs:["Conservative","Balanced","Growth"],next:"See my portfolio risk",
+s2:"Risk dashboard",stock:"Single stock",fund:"Equity fund",cash:"Cash / money market",vol:"Volatility (a year)",var:"1-month loss at 95% (VaR)",score:"Risk score",within:"Within your limit",above:"Above your limit",hi:"HIGH",md:"MEDIUM",lo:"LOW",
+wt:"Share of value",rk:"Share of risk",toalert:"Open early warning",
+s3:"Early warning",rebal:"Review rebalancing",human:"Talk to a human adviser",sellb:"I want to sell everything now",
+humanmsg:"Prototype only: here the investor would be connected to a licensed adviser.",
+pause:"Pause before you sell. Falling prices feel worse than they are because losses hurt about twice as much as equal gains feel good (prospect theory). Your profile says you hold and review. Check your plan first.",
+calm:"Good news: no single holding dominates your risk, and you are inside your limit. No action needed.",
+sugg:(s,f,c,v)=>`Suggested mix: stock ${s}%, equity fund ${f}%, cash ${c}%. Volatility would fall to ${v}%. Nothing happens until you approve.`,
+warn:(n,w,r,p,l)=>`Your ${n} is ${w}% of your money but about ${r}% of your risk, so one bad day for it hurts the whole portfolio. Portfolio volatility is ${p}%, ${l}.`,
+theory:"How it works",t1:["The risk engine uses fixed rules and Modern Portfolio Theory: risk depends on how holdings move together, not just on how many you own.","The AI only writes the explanation. It cannot change numbers or limits.","Assumed yearly volatility: stock 30%, fund 15%, cash 4%. Correlations 0.1 to 0.3. Normal returns."],
+home:{hi:"Hi, Investor",val:"Portfolio value (hypothetical)",prof:"Profile",qa:["Risk check","Rebalance","Learn","Adviser"],ins:"Today’s insight",see:"See details",learn:"Learn",l:["What is diversification?","Why one stock can dominate risk","What is Value at Risk?"],lmsg:"Diversification means spreading money across holdings that do not move together, so one bad day for one holding hurts less.",hmsg:"Prototype only: the investor would be connected to a licensed human adviser.",tabs:["Home","Risk","Alerts","Profile"],risk:"Risk",bal:"Balanced"},
+foot:"Illustrative design prototype for an INV613 case study. Not investment advice and not a live financial service."},
+ms:{sub:"Prototaip boleh klik · portfolio hipotesis RM10,000",steps:["1 Profil","2 Papan pemuka","3 Amaran"],
+s1:"Profil risiko",q1:"Jika portfolio anda jatuh 20% dalam sebulan, anda akan…",a1:["Jual semua","Tahan dan semak","Beli lagi"],q2:"Berapa lama wang boleh dilaburkan?",a2:["Kurang 3 tahun","3 hingga 7 tahun","Lebih 7 tahun"],q3:"Apa yang paling penting?",a3:["Lindungi wang saya","Seimbangkan pertumbuhan dan keselamatan","Kembangkan wang saya"],
+prof:"Profil anda",limit:"Volatiliti dibenarkan sehingga",profs:["Konservatif","Seimbang","Pertumbuhan"],next:"Lihat risiko portfolio saya",
+s2:"Papan pemuka risiko",stock:"Saham tunggal",fund:"Dana ekuiti",cash:"Tunai / pasaran wang",vol:"Volatiliti (setahun)",var:"Kerugian 1 bulan pada 95% (VaR)",score:"Skor risiko",within:"Dalam had anda",above:"Melebihi had anda",hi:"TINGGI",md:"SEDERHANA",lo:"RENDAH",
+wt:"Bahagian nilai",rk:"Bahagian risiko",toalert:"Buka amaran awal",
+s3:"Amaran awal",rebal:"Semak pengimbangan semula",human:"Bercakap dengan penasihat",sellb:"Saya mahu jual semua sekarang",
+humanmsg:"Prototaip sahaja: di sini pelabur akan disambungkan kepada penasihat berlesen.",
+pause:"Berhenti sebentar sebelum menjual. Kejatuhan harga terasa lebih teruk kerana kerugian menyakitkan kira-kira dua kali ganda berbanding keuntungan yang sama (teori prospek). Profil anda berkata tahan dan semak. Semak pelan anda dahulu.",
+calm:"Berita baik: tiada satu pegangan pun mendominasi risiko anda, dan anda berada dalam had. Tiada tindakan diperlukan.",
+sugg:(s,f,c,v)=>`Campuran dicadangkan: saham ${s}%, dana ekuiti ${f}%, tunai ${c}%. Volatiliti akan turun kepada ${v}%. Tiada apa berlaku sehingga anda meluluskan.`,
+warn:(n,w,r,p,l)=>`${n} anda ialah ${w}% wang anda tetapi kira-kira ${r}% risiko anda, jadi satu hari buruk bagi pegangan itu menjejaskan seluruh portfolio. Volatiliti portfolio ${p}%, ${l}.`,
+theory:"Cara ia berfungsi",t1:["Enjin risiko menggunakan peraturan tetap dan Teori Portfolio Moden: risiko bergantung pada cara pegangan bergerak bersama, bukan sekadar bilangannya.","AI hanya menulis penerangan. Ia tidak boleh mengubah angka atau had.","Andaian volatiliti setahun: saham 30%, dana 15%, tunai 4%. Korelasi 0.1 hingga 0.3. Pulangan normal."],
+home:{hi:"Hai, Pelabur",val:"Nilai portfolio (hipotesis)",prof:"Profil",qa:["Semak risiko","Imbang semula","Belajar","Penasihat"],ins:"Pandangan hari ini",see:"Lihat butiran",learn:"Belajar",l:["Apa itu kepelbagaian?","Mengapa satu saham boleh mendominasi risiko","Apa itu Nilai pada Risiko?"],lmsg:"Kepelbagaian bermaksud menyebarkan wang ke pegangan yang tidak bergerak serentak, supaya satu hari buruk bagi satu pegangan tidak terlalu menyakitkan.",hmsg:"Prototaip sahaja: pelabur akan disambungkan kepada penasihat manusia berlesen.",tabs:["Utama","Risiko","Amaran","Profil"],risk:"Risiko",bal:"Seimbang"},
+foot:"Prototaip reka bentuk ilustrasi untuk kajian kes INV613. Bukan nasihat pelaburan dan bukan perkhidmatan kewangan sebenar."}};
+const vols=[.30,.15,.04],corr=[[1,.3,.1],[.3,1,.2],[.1,.2,1]],LIM=[.08,.14,.20];
+const S={l:'en',step:0,a:[1,1,1],stock:60,fund:25,showSug:false,human:false,sell:false};
+const $=id=>document.getElementById(id);
+function calc(s,f){const c=100-s-f,w=[s/100,f/100,c/100];
+ const cov=vols.map((a,i)=>vols.map((b,j)=>a*b*corr[i][j]));
+ const cw=cov.map(r=>r.reduce((t,x,j)=>t+x*w[j],0));
+ const v2=w.reduce((t,x,i)=>t+x*cw[i],0),v=Math.sqrt(v2);
+ const rc=w.map((x,i)=>v?x*cw[i]/v2:0);
+ return{w:w.map(x=>x*100),rc:rc.map(x=>x*100),v:v*100,var95:1.645*v*Math.sqrt(1/12)*10000}}
+function prof(){const sc=S.a.reduce((t,x)=>t+x,0);return sc<=2?0:sc<=4?1:2}
+function sugg(){let s=S.stock,f=S.fund,lim=LIM[prof()]*100;
+ for(let k=0;k<100;k++){const r=calc(s,f);if(r.v<=lim&&Math.max(...r.rc)<=55)break;if(s<=0)break;s--;if(f<50)f++}
+ const r=calc(s,f);return{s,f,c:100-s-f,v:r.v}}
+const QA=['<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg>', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M6 8h12M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/></svg>', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5"/></svg>', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2M4 14h3v5H4zM17 14h3v5h-3z"/></svg>'],TB=['<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></svg>', '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'];
+function gx(R){const a=Math.PI*(1-.625);return(100+R*Math.cos(a)*-1*-1*1).toFixed(1)}
+function gy(R){return(100-R*Math.sin(Math.PI*(1-.625))).toFixed(1)}
+function render(){const t=T[S.l],r=calc(S.stock,S.fund),lim=LIM[prof()]*100,over=r.v>lim,top=Math.max(...r.rc),ti=r.rc.indexOf(top);
+ const names=[t.stock,t.fund,t.cash],conc=top>55;
+ $('sub').textContent=t.sub;$('foot').textContent=t.foot;
+  [...$('langs').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===S.l));
+ let h='';
+ if(S.step===0){const H=t.home;
+  h=`<div class="bal"><span>${H.val}</span><b>RM 10,000.00</b><div><span class="chip">${H.prof}: ${H.bal==='Balanced'?t.profs[prof()]:t.profs[prof()]}</span> <span class="chip ${over?'w2':''}">${H.risk}: ${over?t.hi:t.lo}</span></div></div>
+  <div class="qa">${H.qa.map((x,i)=>`<button data-go="${[1,2,0,0][i]}" ${i===1?'data-sug="1"':''} ${i>=2?`data-msg="${i===2?'learn':'human'}"`:''}><i>${QA[i]}</i><span>${x}</span></button>`).join('')}</div>
+  ${S.msg?`<div class="alert ok">${S.msg==='learn'?H.lmsg:H.hmsg}</div>`:''}
+  <h3 class="sec">${H.ins}</h3><div class="alert ${conc||over?'':'ok'}">${conc||over?t.warn(names[ti],r.w[ti].toFixed(0),top.toFixed(0),r.v.toFixed(1),over?t.above.toLowerCase():t.within.toLowerCase()):t.calm}</div>
+  <button class="ghost" data-go="2">${H.see}</button>
+  <h3 class="sec">${H.learn}</h3><div class="list">${H.l.map(x=>`<div><i>${QA[2]}</i><span>${x}</span></div>`).join('')}</div>`}
+ if(S.step===3){const qs=[[t.q1,t.a1],[t.q2,t.a2],[t.q3,t.a3]];
+  h=`<span class="tag">${t.s1}</span>`+qs.map((q,qi)=>`<p class="q">${q[0]}</p>`+q[1].map((o,oi)=>`<button class="opt" data-q="${qi}" data-o="${oi}" aria-pressed="${S.a[qi]===oi}">${o}</button>`).join('')).join('')+
+  `<div class="alert ok"><b>${t.prof}: ${t.profs[prof()]}</b><br>${t.limit} ${lim.toFixed(0)}%</div><button class="primary" data-go="1">${t.next}</button>`}
+ if(S.step===1){const lab=r.v>lim?t.hi:r.v>lim*.7?t.md:t.lo;
+  h=`<span class="tag">${t.s2}</span><div><span class="badge ${over?'high':'ok'}">${t.score}: ${lab}</span> <span class="badge ${over?'high':'ok'}">${over?t.above:t.within}</span></div>
+  <div class="gauge"><svg viewBox="0 0 200 112"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" style="stop-color:var(--accent)"/><stop offset=".6" style="stop-color:var(--accent2)"/><stop offset="1" style="stop-color:var(--warn)"/></linearGradient></defs><path d="M20 100A80 80 0 0 1 180 100" fill="none" stroke="var(--bar-bg)" stroke-width="14" stroke-linecap="round"/><path d="M20 100A80 80 0 0 1 180 100" fill="none" stroke="url(#gg)" stroke-width="14" stroke-linecap="round" stroke-dasharray="${(Math.min(r.v/(lim*1.6),1)*251.3).toFixed(1)} 251.3"/><line x1="${gx(70)}" y1="${gy(70)}" x2="${gx(92)}" y2="${gy(92)}" stroke="var(--ink)" stroke-width="2.5"/></svg><div class="gv"><b>${r.v.toFixed(1)}%</b><span>${t.vol}</span></div></div>
+  <div class="metrics"><div class="m"><b>${(r.v/lim*100).toFixed(0)}%</b><span>of your limit</span></div><div class="m"><b>RM${Math.round(r.var95/10)*10}</b><span>${t.var}</span></div></div>
+  <div class="row"><label for="sl1"><span>${t.stock}</span><span>${S.stock}%</span></label><input id="sl1" type="range" min="0" max="100" value="${S.stock}" data-k="stock"></div>
+  <div class="row"><label for="sl2"><span>${t.fund}</span><span>${S.fund}%</span></label><input id="sl2" type="range" min="0" max="${100-S.stock}" value="${S.fund}" data-k="fund"></div>
+  <div class="row"><label><span>${t.cash}</span><span>${100-S.stock-S.fund}%</span></label></div>
+  <div class="bars"><div class="note">■ ${t.wt} &nbsp; <span style="color:var(--warn)">■</span> ${t.rk}</div>`+
+  [0,1,2].map(i=>`<div class="bar"><span>${names[i].split(' /')[0]}</span><div><div class="track"><i class="w" style="width:${r.w[i]}%"></i></div><div class="track" style="margin-top:3px"><i class="r" style="width:${r.rc[i]}%"></i></div></div><span>${r.w[i].toFixed(0)}/${r.rc[i].toFixed(0)}</span></div>`).join('')+`</div>
+  <button class="primary" data-go="2">${t.toalert}</button>`}
+ if(S.step===2){const g=sugg();
+  h=`<span class="tag">${t.s3}</span><div class="alert ${conc||over?'':'ok'}">${conc||over?t.warn(names[ti],r.w[ti].toFixed(0),top.toFixed(0),r.v.toFixed(1),over?t.above.toLowerCase():t.within.toLowerCase()):t.calm}</div>
+  ${S.showSug?`<div class="alert ok">${t.sugg(g.s,g.f,g.c,g.v.toFixed(1))}</div>`:''}
+  ${S.human?`<p class="note">${t.humanmsg}</p>`:''}
+  ${S.sell?`<div class="alert">${t.pause}</div>`:''}
+  <button class="primary" data-act="rebal">${t.rebal}</button><button class="ghost" data-act="human">${t.human}</button><button class="ghost" data-act="sell">${t.sellb}</button>`}
+ const bad=(conc||over)?1:0;
+ const tabs=t.home.tabs.map((x,i)=>`<button data-go="${i}" ${S.step===i?'aria-current="page"':''}><i>${TB[i]}${i===2&&bad?'<em></em>':''}</i><span>${x}</span></button>`).join('');
+ const sc0=document.querySelector('.scr'),st=sc0&&S.last===S.step?sc0.scrollTop:0;S.last=S.step;
+ $('phone').innerHTML=`<div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="appbar"><div class="av">I</div><div><small>${t.home.hi}</small><b>RiskGuard AI</b></div><button class="bell" data-go="2" aria-label="${t.home.tabs[2]}">${TB[2]}${bad?'<em></em>':''}</button></div><div class="scr">${h}</div><nav class="tabbar">${tabs}</nav>`;
+ const sc1=document.querySelector('.scr');if(sc1)sc1.scrollTop=st;
+ $('side').innerHTML=`<div><h3>${t.theory}</h3><ul>${t.t1.map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.s)S.step=+b.dataset.s;else if(b.dataset.l)S.l=b.dataset.l;else if(b.dataset.q)S.a[+b.dataset.q]=+b.dataset.o;else if(b.dataset.msg){S.msg=b.dataset.msg}
+ else if(b.dataset.go){S.step=+b.dataset.go;if(b.dataset.sug)S.showSug=true;S.msg=b.dataset.msg||''}else if(b.dataset.act==='rebal')S.showSug=!S.showSug;
+ else if(b.dataset.act==='human')S.human=!S.human;else if(b.dataset.act==='sell')S.sell=!S.sell;else return;render()});
+document.addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;S[k]=+e.target.value;if(S.stock+S.fund>100)S.fund=100-S.stock;
+ const id=e.target.id;render();const el=$(id);if(el){el.focus()}});
+function bg(){const svg=$('bg');let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+ let h='<defs><linearGradient id="ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3DDBC0" stop-opacity=".28"/><stop offset="1" stop-color="#3DDBC0" stop-opacity="0"/></linearGradient></defs>';
+ for(let x=0;x<=1600;x+=100)h+=`<line x1="${x}" y1="0" x2="${x}" y2="900" stroke="var(--grid)"/>`;
+ for(let y=0;y<=900;y+=100)h+=`<line x1="0" y1="${y}" x2="1600" y2="${y}" stroke="var(--grid)"/>`;
+ let v=640,pts=[];const n=64,dx=1600/n;
+ for(let i=0;i<n;i++){const o=v;v+=(rnd()-.58)*46-3.4;v=Math.max(150,Math.min(800,v));const c=v,hi=Math.max(o,c)+rnd()*22,lo=Math.min(o,c)-rnd()*22,x=i*dx+dx/2,up=c<o;
+  const col=up?'#3DDBC0':'#F2A33A';
+  h+=`<line x1="${x}" y1="${hi}" x2="${x}" y2="${lo}" stroke="${col}" stroke-opacity=".35"/><rect x="${x-6}" y="${Math.min(o,c)}" width="12" height="${Math.max(3,Math.abs(c-o))}" fill="${col}" fill-opacity=".3"/>`;pts.push([x,c])}
+ const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(0)+' '+p[1].toFixed(0)).join(' ');
+ h+=`<path d="${d} L1600 900 L0 900Z" fill="url(#ar)"/><path d="${d}" fill="none" stroke="#3DDBC0" stroke-opacity=".5" stroke-width="2.5"/>`;
+ svg.innerHTML=h}
+(function(){const w=['Diversification','Volatility','Value at Risk','Drawdown','Rebalancing','Risk contribution','Sharpe ratio','Concentration','Asset allocation','Risk tolerance'];
+ const one=w.map((x,i)=>`<span>${x} <b class="${i%3==1?'dn':'up'}">${i%3==1?'▼':'▲'}</b></span>`).join('');$('tk').innerHTML=one+one})();
+bg();
+render();
+</script>
+
+</body></html>
